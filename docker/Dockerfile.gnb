@@ -1,0 +1,35 @@
+# Use an official Ubuntu image
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies including wget
+RUN apt-get update && \
+    apt-get install -y \
+      git \
+      build-essential \
+      wget \
+      libsctp-dev \
+      libssl-dev \
+      libcurl4-openssl-dev \
+      libboost-all-dev \
+      iputils-ping \
+      net-tools && \
+    apt-get clean
+
+# Install a newer version of CMake (3.20.2 in this example)
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.2/cmake-3.20.2-linux-x86_64.sh && \
+    chmod +x cmake-3.20.2-linux-x86_64.sh && \
+    ./cmake-3.20.2-linux-x86_64.sh --skip-license --prefix=/usr/local && \
+    rm cmake-3.20.2-linux-x86_64.sh
+
+# Clone UERANSIM repository into /opt
+WORKDIR /opt
+RUN git clone https://github.com/aligungr/UERANSIM.git
+
+# Build UERANSIM
+WORKDIR /opt/UERANSIM
+RUN make
+
+# Set the entrypoint to run the gNB binary with a configuration file.
+ENTRYPOINT ["/opt/UERANSIM/build/nr-gnb", "-c", "/UERANSIM/config/open5gs-gnb.yaml"]
